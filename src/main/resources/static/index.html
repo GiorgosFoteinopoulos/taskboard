@@ -13,9 +13,15 @@
     <div class="server">
         <span id="server-status" class="status">Checking the server...</span>
         <button id="check-button" type="button">Check again</button>
-        <button id="reload-button" type="button">Reload tasks</button>
     </div>
 </header>
+
+<form id="task-form" class="task-form">
+    <input id="task-title" name="title" type="text" placeholder="What needs to be done?"
+           maxlength="100" required autocomplete="off">
+    <button type="submit">Add task</button>
+    <span id="form-error" class="form-error" hidden></span>
+</form>
 
 <p id="board-message" class="board-message" hidden></p>
 

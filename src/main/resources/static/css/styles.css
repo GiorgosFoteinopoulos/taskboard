@@ -124,3 +124,46 @@ button {
     font-size: 12px;
     color: #7a869a;
 }
+
+.task-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 24px 0;
+}
+
+.task-form input {
+    width: 360px;
+    padding: 8px 10px;
+    border: 1px solid #c1c7d0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.task-form button {
+    background: #0c66e4;
+    border-color: #0c66e4;
+    color: white;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.form-error {
+    color: #bf2600;
+    font-size: 14px;
+}
+
+.card-new {
+    animation: flash 1.5s ease-out;
+}
+@keyframes flash {
+    from {
+        background: #fff7d6;
+    }
+    to {
+        background: white;
+    }
+}
