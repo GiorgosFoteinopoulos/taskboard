@@ -2,6 +2,10 @@ const statusLabel = document.getElementById('server-status');
 const checkButton = document.getElementById('check-button');
 const boardMessage = document.getElementById('board-message');
 const columns = document.querySelectorAll('.column');
+const taskForm = document.getElementById('task-form');
+const titleInput = document.getElementById('task-title');
+const addButton = taskForm.querySelector('button[type="submit"]');
+const formError = document.getElementById('form-error');
 
 
 
@@ -95,8 +99,45 @@ function formatTime(isoText) {
     });
 }
 
+async function createTask(event) {
+    event.preventDefault();
+    formError.hidden = true;
+    addButton.disabled = true;
+
+    try {
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: titleInput.value})
+        });
+        if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.message || 'HTTP ' + response.status);
+        }
+        const created = await response.json();
+
+        taskForm.reset();
+        titleInput.focus();
+        await loadTasks();
+        highlightCard(created.id);
+    } catch (error) {
+        formError.textContent = error.message;
+        formError.hidden = false;
+    } finally {
+        addButton.disabled = false;
+    }
+}
+
+function highlightCard(id) {
+    const card = document.querySelector('.card[data-id="' + id + '"]');
+    if (card) {
+        card.classList.add('new');
+    }
+}
+
 
 
 checkButton.addEventListener('click', checkServer);
+taskForm.addEventListener('submit', createTask);
 checkServer();
 loadTasks();
