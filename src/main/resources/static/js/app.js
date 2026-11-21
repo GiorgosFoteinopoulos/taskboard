@@ -1,5 +1,9 @@
 const statusLabel = document.getElementById('server-status');
 const checkButton = document.getElementById('check-button');
+const boardMessage = document.getElementById('board-message');
+const columns = document.querySelectorAll('.column');
+
+
 
 async function checkServer() {
     statusLabel.textContent = 'Checking the server...';
@@ -11,7 +15,7 @@ async function checkServer() {
             throw new Error('HTTP ' + response.status);
         }
         const data = await response.json();
-        statusLabel.textContent = 'Server says "' + data.message + '" at ' + data.serverTime;
+        statusLabel.textContent = 'Server says "' + data.message + '" at ' + formatTime(data.serverTime);
         statusLabel.className = 'status ok';
     } catch (error) {
         statusLabel.textContent = 'Cannot reach the server: ' + error.message;
@@ -19,43 +23,37 @@ async function checkServer() {
     }
 }
 
-const boardMessage = document.getElementById('board-message');
-const reloadButton = document.getElementById('reload-button');
-const columns = document.querySelectorAll('.column');
 
-const dateFormat = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 
 async function loadTasks() {
-    showBoardMessage('Loading tasks...');
-
     try {
         const response = await fetch('/api/tasks');
         if (!response.ok) {
             throw new Error('HTTP ' + response.status);
         }
         const tasks = await response.json();
+        boardMessage.hidden = true;
         renderBoard(tasks);
-        showBoardMessage('', '');
     } catch (error) {
-        showBoardMessage('Could not load tasks: ' + error.message, 'error');
+        showBoardMessage('Could not load the tasks: ' + error.message);
     }
 }
 
 function renderBoard(tasks) {
     for (const column of columns) {
         const status = column.dataset.status;
-        const cardList = column.querySelector('.cards');
-        const counter = column.querySelector('.count');
-        const tasksInColumn = tasks.filter(task => task.status === status);
+        const columnTasks = tasks.filter(task => task.status === status);
 
-        cardList.replaceChildren();
-        for (const task of tasksInColumn) {
-            cardList.append(createCard(task));
+        const cards = column.querySelector('.cards');
+        cards.replaceChildren();
+        for (const task of columnTasks) {
+            cards.append(createCard(task));
         }
-        if (tasksInColumn.length === 0) {
-            cardList.append(createEmptyNote());
+        if (columnTasks.length === 0) {
+            cards.append(createEmptyMessage());
         }
-        counter.textContent = tasksInColumn.length;
+
+        column.querySelector('.count').textContent = columnTasks.length;
     }
 }
 
@@ -70,27 +68,35 @@ function createCard(task) {
 
     const meta = document.createElement('p');
     meta.className = 'card-meta';
-    meta.textContent = '#' + task.id + ' - ' + dateFormat.format(new Date(task.createdAt));
+    meta.textContent = '#' + task.id + ' · created ' + formatTime(task.createdAt);
 
     card.append(title, meta);
     return card;
 }
 
-function createEmptyNote() {
-    const note = document.createElement('p');
-    note.className = 'empty';
-    note.textContent = 'No tasks yet';
-    return note;
+function createEmptyMessage() {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'No tasks yet';
+    return empty;
 }
 
-function showBoardMessage(text, kind) {
+function showBoardMessage(text) {
     boardMessage.textContent = text;
-    boardMessage.className = 'board-message' + kind;
-    boardMessage.hidden = text === '';
+    boardMessage.hidden = false;
 }
+
+function formatTime(isoText) {
+    return new Date(isoText).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+
 
 checkButton.addEventListener('click', checkServer);
-reloadButton.addEventListener('click', loadTasks);
-
 checkServer();
 loadTasks();

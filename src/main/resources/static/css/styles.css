@@ -54,19 +54,6 @@ button {
     cursor: pointer;
 }
 
-.board-message {
-    margin: 16px 24px 0;
-    padding: 10px 14px;
-    border-radius: 6px;
-    background: #deebff;
-    color: #0747a6;
-}
-
-.board-message.error {
-    background: #ffebe6;
-    color: #bf2600;
-}
-
 .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -88,7 +75,25 @@ button {
     color: #5e6c84;
 }
 
+.empty {
+    color: #7a869a;
+    font-size: 14px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.message {
+    margin: 16px 24px 0;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #ffebe6;
+    color: #bf2600;
+}
+
 .count {
+    margin-left: 6px;
     padding: 1px 8px;
     border-radius: 10px;
     background: #dfe1e6;
@@ -118,8 +123,4 @@ button {
     margin: 0;
     font-size: 12px;
     color: #7a869a;
-}
-.empty {
-    color: #7a869a;
-    font-size: 14px;
 }
