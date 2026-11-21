@@ -13,21 +13,24 @@
     <div class="server">
         <span id="server-status" class="status">Checking the server...</span>
         <button id="check-button" type="button">Check again</button>
+        <button id="reload-button" type="button">Reload tasks</button>
     </div>
 </header>
 
+<p id="board-message" class="board-message" hidden></p>
+
 <main class="board">
-    <section class="column">
-        <h2>To Do</h2>
-        <p class="empty">No tasks yet</p>
+    <section class="column" data-status="TODO">
+        <h2>To Do <span class="count">0</span></h2>
+       <div class="cards"></div>
     </section>
-    <section class="column">
-        <h2>In Progress</h2>
-        <p class="empty">No tasks yet</p>
+    <section class="column" data-status="IN_PROGRESS">
+        <h2>In Progress <span class="count">0</span></h2>
+        <div class="cards"></div>
     </section>
-    <section class="column">
-        <h2>Done</h2>
-        <p class="empty">No tasks yet</p>
+    <section class="column" data-status="DONE">
+        <h2>Done <span class="count">0</span></h2>
+        <div class="cards"></div>
     </section>
 </main>
 </body>
