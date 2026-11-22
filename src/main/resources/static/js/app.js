@@ -1,6 +1,10 @@
+const STATUSES = ['TODO', 'IN_PROGRESS', 'DONE'];
+const LABELS = { TODO: 'To Do', IN_PROGRESS: 'In Progress', DONE: 'Done' };
+
 const statusLabel = document.getElementById('server-status');
 const checkButton = document.getElementById('check-button');
 const boardMessage = document.getElementById('board-message');
+const board = document.querySelector('.board');
 const columns = document.querySelectorAll('.column');
 const taskForm = document.getElementById('task-form');
 const titleInput = document.getElementById('task-title');
@@ -74,8 +78,28 @@ function createCard(task) {
     meta.className = 'card-meta';
     meta.textContent = '#' + task.id + ' · created ' + formatTime(task.createdAt);
 
-    card.append(title, meta);
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
+    const index = STATUSES.indexOf(task.status);
+    if (index > 0) {
+        actions.append(createMoveButton('←', STATUSES[index - 1]));
+    }
+    if (index < STATUSES.length - 1) {
+        actions.append(createMoveButton('→', STATUSES[index + 1]));
+    }
+
+    card.append(title, meta, actions);
     return card;
+}
+
+function createMoveButton(arrow, targetStatus) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'move';
+    button.dataset.move = targetStatus;
+    button.textContent = arrow;
+    button.title = 'Move to ' + LABELS[targetStatus];
+    return button;
 }
 
 function createEmptyMessage() {
@@ -135,9 +159,37 @@ function highlightCard(id) {
     }
 }
 
+async function handleBoardClick(event) {
+    const button = event.target.closest('button[data-move]');
+    if (!button) {
+        return;
+    }
+    const card = button.closest('.card');
+    await moveTask(card.dataset.id, button.dataset.move);
+}
+
+async function moveTask(id, status) {
+    try {
+        const response = await fetch('/api/tasks/' + id, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: status })
+        });
+        if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.message || 'HTTP ' + response.status);
+        }
+        await loadTasks();
+        highlightCard(id);
+    } catch (error) {
+        showBoardMessage('Could not move the task: ' + error.message);
+    }
+}
+
 
 
 checkButton.addEventListener('click', checkServer);
 taskForm.addEventListener('submit', createTask);
+board.addEventListener('click', handleBoardClick);
 checkServer();
 loadTasks();

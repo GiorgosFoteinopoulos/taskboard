@@ -44,6 +44,15 @@ public class TaskService {
         return add(validTitle(rawTitle), TaskStatus.TODO);
     }
 
+    public Task changeStatus(long id, TaskStatus newStatus) {
+        if (newStatus == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is required");
+        }
+        Task updated = findById(id).withStatus(newStatus);
+        tasks.put(id, updated);
+        return updated;
+    }
+
     private Task add(String title, TaskStatus status) {
         long id = nextId.getAndIncrement();
         Task task = new Task(id, title, status, Instant.now());
