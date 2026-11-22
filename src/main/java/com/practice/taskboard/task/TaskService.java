@@ -71,4 +71,10 @@ public class TaskService {
         }
         return title;
     }
+
+    public void delete(long id) {
+        if (tasks.remove(id) == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task " + id + " not found");
+        }
+    }
 }
