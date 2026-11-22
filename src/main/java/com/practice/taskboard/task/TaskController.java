@@ -33,4 +33,9 @@ public class TaskController {
         URI location = URI.create("/api/tasks/" + task.id());
         return ResponseEntity.created(location).body(task);
     }
+
+    @PatchMapping("/{id}")
+    public Task changeStatus(@PathVariable long id, @RequestBody UpdateStatusRequest request) {
+        return taskService.changeStatus(id, request.status());
+    }
 }
