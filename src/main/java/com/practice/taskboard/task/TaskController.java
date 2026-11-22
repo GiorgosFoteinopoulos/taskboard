@@ -38,4 +38,10 @@ public class TaskController {
     public Task changeStatus(@PathVariable long id, @RequestBody UpdateStatusRequest request) {
         return taskService.changeStatus(id, request.status());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable long id) {
+        taskService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

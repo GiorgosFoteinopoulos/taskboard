@@ -80,6 +80,7 @@ function createCard(task) {
 
     const actions = document.createElement('div');
     actions.className = 'card-actions';
+    actions.append(createDeleteButton());
     const index = STATUSES.indexOf(task.status);
     if (index > 0) {
         actions.append(createMoveButton('←', STATUSES[index - 1]));
@@ -90,6 +91,16 @@ function createCard(task) {
 
     card.append(title, meta, actions);
     return card;
+}
+
+function createDeleteButton() {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'delete';
+    button.dataset.delete = 'true';
+    button.textContent = '🗑';
+    button.title = 'Delete task';
+    return button;
 }
 
 function createMoveButton(arrow, targetStatus) {
@@ -160,12 +171,33 @@ function highlightCard(id) {
 }
 
 async function handleBoardClick(event) {
-    const button = event.target.closest('button[data-move]');
-    if (!button) {
+    const moveButton = event.target.closest('button[data-move]');
+    if (moveButton) {
+        const card = moveButton.closest('.card');
+        await moveTask(card.dataset.id, moveButton.dataset.move);
         return;
     }
-    const card = button.closest('.card');
-    await moveTask(card.dataset.id, button.dataset.move);
+   const deleteButton = event.target.closest('button[data-delete]');
+    if (deleteButton) {
+        const card = deleteButton.closest('.card');
+        const title = card.querySelector('.card-title').textContent;
+        if (confirm('Delete "' + title + '"?')) {
+            await deleteTask(card.dataset.id);
+        }
+    }
+}
+
+async function deleteTask(id) {
+    try {
+        const response = await fetch('/api/tasks/' + id, { method: 'DELETE' });
+        if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.message || 'HTTP ' + response.status);
+        }
+        await loadTasks();
+    } catch (error) {
+        showBoardMessage('Could not delete the task: ' + error.message);
+    }
 }
 
 async function moveTask(id, status) {

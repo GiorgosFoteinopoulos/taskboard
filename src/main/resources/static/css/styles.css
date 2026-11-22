@@ -177,6 +177,19 @@ button:disabled {
     background: #e9f2ff;
     border-color: #0c66e4;
 }
+
+.delete {
+    margin-right: auto;
+    padding: 2px 8px;
+    border-color: transparent;
+    background: transparent;
+    font-size: 14px;
+}
+
+.delete:hover {
+    background: #ffebe6;
+    border-color: #bf2600;
+}
 @keyframes flash {
     from {
         background: #fff7d6;
