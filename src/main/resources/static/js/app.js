@@ -94,6 +94,7 @@ function createCard(task) {
     const card = document.createElement('article');
     card.className = 'card';
     card.dataset.id = task.id;
+    card.draggable = true;
 
     const title = document.createElement('p');
     title.className = 'card-title';
@@ -239,11 +240,71 @@ async function showCardError(action, error) {
     }
 }
 
+function handleDragStart(event) {
+    const card = event.target.closest('.card');
+    if (!card) {
+        return;
+    }
+    event.dataTransfer.setData('text/plain', card.dataset.id);
+    event.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+}
+
+function handleDragEnd(event) {
+    const card = event.target.closest('.card');
+    if (card) {
+        card.classList.remove('dragging');
+    }
+    for (const column of columns) {
+        column.classList.remove('drop-target');
+    }
+}
+
+function handleDragOver(event) {
+    const column = event.target.closest('.column');
+    if (!column) {
+        return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    column.classList.add('drop-target');
+}
+
+function handleDragLeave(event) {
+    const column = event.target.closest('.column');
+    if (column && !column.contains(event.relatedTarget)) {
+        column.classList.remove('drop-target');
+    }
+}
+
+async function handleDrop(event) {
+    const column = event.target.closest('.column');
+    if (!column) {
+        return;
+    }
+    event.preventDefault();
+    column.classList.remove('drop-target');
+
+    const id = event.dataTransfer.getData('text/plain');
+    const card = document.querySelector('.card[data-id="' + id + '"]');
+    const fromStatus = card ? card.closest('.column').dataset.status : null;
+    const toStatus = column.dataset.status;
+
+    if (fromStatus !== toStatus) {
+        await moveTask(id, toStatus);
+    }
+}
+
 
 
 checkButton.addEventListener('click', checkServer);
 taskForm.addEventListener('submit', createTask);
 board.addEventListener('click', handleBoardClick);
 boardMessageClose.addEventListener('click', hideBoardMessage);
+board.addEventListener('dragstart', handleDragStart);
+board.addEventListener('dragend', handleDragEnd);
+board.addEventListener('dragover', handleDragOver);
+board.addEventListener('dragleave', handleDragLeave);
+board.addEventListener('drop', handleDrop);
 checkServer();
 loadTasks();

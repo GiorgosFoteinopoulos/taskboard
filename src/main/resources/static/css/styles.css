@@ -204,6 +204,19 @@ button:disabled {
     background: transparent;
     color: #bf2600;
 }
+.card[draggable="true"] {
+    cursor: grab;
+}
+
+.card.dragging {
+    opacity: 0.4;
+}
+
+.column.drop-target {
+    outline: 2px dashed #0c66e4;
+    outline-offset: -2px;
+    background: #e9f2ff;
+}
 
 @keyframes flash {
     from {
