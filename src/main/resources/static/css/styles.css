@@ -190,6 +190,21 @@ button:disabled {
     background: #ffebe6;
     border-color: #bf2600;
 }
+
+.message {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+#board-message-close {
+    padding: 0 8px;
+    border-color: transparent;
+    background: transparent;
+    color: #bf2600;
+}
+
 @keyframes flash {
     from {
         background: #fff7d6;

@@ -4,6 +4,8 @@ const LABELS = { TODO: 'To Do', IN_PROGRESS: 'In Progress', DONE: 'Done' };
 const statusLabel = document.getElementById('server-status');
 const checkButton = document.getElementById('check-button');
 const boardMessage = document.getElementById('board-message');
+const boardMessageText = document.getElementById('board-message-text');
+const boardMessageClose = document.getElementById('board-message-close');
 const board = document.querySelector('.board');
 const columns = document.querySelectorAll('.column');
 const taskForm = document.getElementById('task-form');
@@ -12,35 +14,58 @@ const addButton = taskForm.querySelector('button[type="submit"]');
 const formError = document.getElementById('form-error');
 
 
+class ApiError extends Error {
+    constructor(status, message) {
+        super(message);
+        this.status = status;
+    }
+}
+
+async function request(method, path, body) {
+    const options = { method: method, headers: {} };
+    if (body !== undefined) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+    }
+
+    let response;
+    try {
+        response = await fetch(path, options);
+    } catch (networkError) {
+        throw new ApiError(0, 'Cannot reach the server. Is the app running?');
+    }
+
+    if (!response.ok) {
+        const problem = await response.json().catch(() => ({}));
+        throw new ApiError(response.status, problem.message || 'HTTP ' + response.status);
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+    return response.json();
+}
+
 
 async function checkServer() {
     statusLabel.textContent = 'Checking the server...';
     statusLabel.className = 'status';
 
     try {
-        const response = await fetch('/api/ping');
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
-        }
-        const data = await response.json();
+        const data = await request('GET', '/api/ping');
         statusLabel.textContent = 'Server says "' + data.message + '" at ' + formatTime(data.serverTime);
         statusLabel.className = 'status ok';
     } catch (error) {
-        statusLabel.textContent = 'Cannot reach the server: ' + error.message;
+        statusLabel.textContent = error.message;
         statusLabel.className = 'status error';
     }
 }
 
 
-
 async function loadTasks() {
     try {
-        const response = await fetch('/api/tasks');
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
-        }
-        const tasks = await response.json();
-        boardMessage.hidden = true;
+        const tasks = await request('GET', '/api/tasks');
+        hideBoardMessage();
         renderBoard(tasks);
     } catch (error) {
         showBoardMessage('Could not load the tasks: ' + error.message);
@@ -93,16 +118,6 @@ function createCard(task) {
     return card;
 }
 
-function createDeleteButton() {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'delete';
-    button.dataset.delete = 'true';
-    button.textContent = '🗑';
-    button.title = 'Delete task';
-    return button;
-}
-
 function createMoveButton(arrow, targetStatus) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -110,6 +125,16 @@ function createMoveButton(arrow, targetStatus) {
     button.dataset.move = targetStatus;
     button.textContent = arrow;
     button.title = 'Move to ' + LABELS[targetStatus];
+    return button;
+}
+
+function createDeleteButton() {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'delete';
+    button.dataset.delete = 'true';
+    button.textContent = '🗑';
+    button.title = 'Delete task';
     return button;
 }
 
@@ -121,8 +146,12 @@ function createEmptyMessage() {
 }
 
 function showBoardMessage(text) {
-    boardMessage.textContent = text;
+    boardMessageText.textContent = text;
     boardMessage.hidden = false;
+}
+
+function hideBoardMessage() {
+    boardMessage.hidden = true;
 }
 
 function formatTime(isoText) {
@@ -134,23 +163,15 @@ function formatTime(isoText) {
     });
 }
 
+
+
 async function createTask(event) {
     event.preventDefault();
     formError.hidden = true;
     addButton.disabled = true;
 
     try {
-        const response = await fetch('/api/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: titleInput.value})
-        });
-        if (!response.ok) {
-            const problem = await response.json().catch(() => ({}));
-            throw new Error(problem.message || 'HTTP ' + response.status);
-        }
-        const created = await response.json();
-
+        const created = await request('POST', '/api/tasks', { title: titleInput.value });
         taskForm.reset();
         titleInput.focus();
         await loadTasks();
@@ -170,6 +191,8 @@ function highlightCard(id) {
     }
 }
 
+
+
 async function handleBoardClick(event) {
     const moveButton = event.target.closest('button[data-move]');
     if (moveButton) {
@@ -177,7 +200,8 @@ async function handleBoardClick(event) {
         await moveTask(card.dataset.id, moveButton.dataset.move);
         return;
     }
-   const deleteButton = event.target.closest('button[data-delete]');
+
+    const deleteButton = event.target.closest('button[data-delete]');
     if (deleteButton) {
         const card = deleteButton.closest('.card');
         const title = card.querySelector('.card-title').textContent;
@@ -187,34 +211,31 @@ async function handleBoardClick(event) {
     }
 }
 
-async function deleteTask(id) {
-    try {
-        const response = await fetch('/api/tasks/' + id, { method: 'DELETE' });
-        if (!response.ok) {
-            const problem = await response.json().catch(() => ({}));
-            throw new Error(problem.message || 'HTTP ' + response.status);
-        }
-        await loadTasks();
-    } catch (error) {
-        showBoardMessage('Could not delete the task: ' + error.message);
-    }
-}
-
 async function moveTask(id, status) {
     try {
-        const response = await fetch('/api/tasks/' + id, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: status })
-        });
-        if (!response.ok) {
-            const problem = await response.json().catch(() => ({}));
-            throw new Error(problem.message || 'HTTP ' + response.status);
-        }
+        await request('PATCH', '/api/tasks/' + id, { status: status });
         await loadTasks();
         highlightCard(id);
     } catch (error) {
-        showBoardMessage('Could not move the task: ' + error.message);
+        await showCardError('Could not move the task', error);
+    }
+}
+
+async function deleteTask(id) {
+    try {
+        await request('DELETE', '/api/tasks/' + id);
+        await loadTasks();
+    } catch (error) {
+        await showCardError('Could not delete the task', error);
+    }
+}
+
+async function showCardError(action, error) {
+    if (error.status === 404) {
+        await loadTasks();
+        showBoardMessage(action + ': ' + error.message + '. The board was refreshed.');
+    } else {
+        showBoardMessage(action + ': ' + error.message);
     }
 }
 
@@ -223,5 +244,6 @@ async function moveTask(id, status) {
 checkButton.addEventListener('click', checkServer);
 taskForm.addEventListener('submit', createTask);
 board.addEventListener('click', handleBoardClick);
+boardMessageClose.addEventListener('click', hideBoardMessage);
 checkServer();
 loadTasks();
