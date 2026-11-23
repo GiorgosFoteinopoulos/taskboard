@@ -278,6 +278,8 @@ function handleDragLeave(event) {
 }
 
 async function handleDrop(event) {
+
+
     const column = event.target.closest('.column');
     if (!column) {
         return;
